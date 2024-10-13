@@ -1,0 +1,8 @@
+bin
+scripts
+include
+lib
+private/
+pyvenv.cfg
+__pycache__
+.env
