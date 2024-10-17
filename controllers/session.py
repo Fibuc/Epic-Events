@@ -40,5 +40,10 @@ def get_session():
         Session: Session d'interaction.
     """
     Session = sessionmaker(engine)
-    print(Session())
     return Session()
+
+
+def add_and_commit_in_base(element_to_commit):
+    session = get_session()
+    session.add(element_to_commit)
+    session.commit()

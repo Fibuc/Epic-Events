@@ -58,16 +58,6 @@ class Commercial(User):
     def get_all(cls, session):
         return session.query(cls).all()
 
-    # @classmethod
-    # def create(cls, first_name, last_name, email, password):
-    #     return super().create(
-    #         first_name=first_name,
-    #         last_name=last_name,
-    #         email=email,
-    #         password=password,
-    #         department=department
-    #     )
-
 
 class Supporter(User):
     
@@ -77,32 +67,12 @@ class Supporter(User):
     def get_all(cls, session):
         return session.query(cls).all()
 
-    # @classmethod
-    # def create(cls, first_name, last_name, email, password):
-    #     return super().create(
-    #         first_name=first_name,
-    #         last_name=last_name,
-    #         email=email,
-    #         password=password,
-    #         department=cls.DepartementUser.support.value
-    #     )
-    
 
 class Manager(User):
 
     @classmethod
     def get_all(cls, session):
         return session.query(cls).all()
-
-    # @classmethod
-    # def create(cls, first_name, last_name, email, password):
-    #     return super().create(
-    #         first_name=first_name,
-    #         last_name=last_name,
-    #         email=email,
-    #         password=password,
-    #         department=cls.DepartementUser.management.value
-    #     )
 
 
 class Client(BASE):
@@ -234,3 +204,6 @@ class Department(BASE):
     def create(cls, name):
         return cls(name=name)
 
+    @classmethod
+    def get_all(cls, session):
+        return session.query(cls).all()

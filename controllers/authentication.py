@@ -45,7 +45,7 @@ def logout() -> bool:
         return False
 
 
-def generate_token(user_id: int, user_department: str):
+def generate_token(user_id: int, user_department: int):
     """Génère un JSON Web Token de l'utilisateur et l'enregistre dans un fichier json.
 
     Args:
