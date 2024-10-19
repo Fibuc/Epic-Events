@@ -1,3 +1,5 @@
+from functools import wraps
+
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
@@ -44,6 +46,31 @@ def get_session():
 
 
 def add_and_commit_in_base(element_to_commit):
+    """Créé une session dans laquelle un élément est ajouté à la base de données
+    puis se ferme.
+
+    Args:
+        element_to_commit: Elément à ajouter à la base de données.
+    """
     session = get_session()
     session.add(element_to_commit)
     session.commit()
+    session.close()
+
+
+def with_session(func):
+    """Décorateur permettant d'ouvrir et fermer une session le temps de
+    l'exécution de la fonction décorée.
+
+    Args:
+        func: Fonction décorée nécessitant une session.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        session = get_session()
+        
+        func(*args, session=session, **kwargs)
+
+        session.close()
+
+    return wrapper

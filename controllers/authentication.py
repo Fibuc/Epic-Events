@@ -6,11 +6,11 @@ import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 from models.models import User
-from controllers.session import get_session
+from controllers.session import with_session
 from config import JWT_TOKEN_PATH, SECRET_JWT_KEY, TOKEN_DURATION
 
-
-def login(email: str, password: str) -> bool:
+@with_session
+def login(email: str, password: str, session) -> bool:
     """Permet à l'utilisateur de se connecter à l'application.
 
     Args:
@@ -20,7 +20,6 @@ def login(email: str, password: str) -> bool:
     Returns:
         bool: Etat de la connexion de l'utilisateur. True = Connecté, False = Non connecté.
     """
-    session = get_session()
     user = session.query(User).filter_by(email=email).first()
     if not user or not user.verify_password(password):
         return False

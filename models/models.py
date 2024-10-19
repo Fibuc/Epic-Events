@@ -12,8 +12,8 @@ class User(BASE):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    last_name = Column(String(100), nullable=False)
     first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     department = Column(ForeignKey('departments.id') , nullable=False)
@@ -86,7 +86,7 @@ class Client(BASE):
     company_name = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.now())
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
-    commercial_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    commercial_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
 
     commercial = relationship('Commercial', back_populates='clients')
     contracts = relationship('Contract', back_populates='client')
@@ -121,7 +121,7 @@ class Contract(BASE):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
-    commercial_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    commercial_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     total_amount = Column(Integer, nullable=False)
     already_paid = Column(Integer, default=0)
     status = Column(Enum(ContractStatus), nullable=False, default=ContractStatus.unsigned)
@@ -159,7 +159,7 @@ class Event(BASE):
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     event_start = Column(DateTime, nullable=False)
     event_end = Column(DateTime, nullable=False)
-    support_id = Column(Integer, ForeignKey('users.id'))
+    support_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     location = Column(String(255), nullable=False)
     attendees = Column(Integer)
     notes = Column(String(4096))
@@ -207,3 +207,12 @@ class Department(BASE):
     @classmethod
     def get_all(cls, session):
         return session.query(cls).all()
+    
+    @classmethod
+    def get_department_dict(cls, session):
+        departments_dict = {}
+        departments = cls.get_all(session)
+        for department in departments:
+            departments_dict[department.id] = department.name
+        
+        return departments_dict
