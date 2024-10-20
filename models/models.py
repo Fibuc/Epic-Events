@@ -37,6 +37,15 @@ class User(BASE):
             department=department
             )
     
+    @classmethod
+    def get_users_dict(cls, session):
+        users_dict = {}
+        users = cls.get_all(session)
+        for user in users:
+            users_dict[user.id] = user.full_name
+        
+        return users_dict
+    
     def verify_password(self, password):
         try:
             ph.verify(self.password, password)
@@ -56,7 +65,8 @@ class Commercial(User):
 
     @classmethod
     def get_all(cls, session):
-        return session.query(cls).all()
+        commercial_department = session.query(Department).filter(Department.name == 'Commercial').first()
+        return session.query(cls).filter(cls.department==commercial_department.id).all()
 
 
 class Supporter(User):
@@ -65,14 +75,8 @@ class Supporter(User):
 
     @classmethod
     def get_all(cls, session):
-        return session.query(cls).all()
-
-
-class Manager(User):
-
-    @classmethod
-    def get_all(cls, session):
-        return session.query(cls).all()
+        commercial_department = session.query(Department).filter(Department.name == 'Support').first()
+        return session.query(cls).filter(cls.department==commercial_department.id).all()
 
 
 class Client(BASE):
@@ -111,6 +115,14 @@ class Client(BASE):
             commercial_id=commercial_id
         )
 
+    @classmethod
+    def get_clients_dict(cls, session):
+        clients_dict = {}
+        clients = cls.get_all(session)
+        for client in clients:
+            clients_dict[client.id] = client.full_name
+        
+        return clients_dict
 
 class Contract(BASE):
     __tablename__ = 'contracts'
@@ -134,7 +146,7 @@ class Contract(BASE):
 
     @property
     def outstanding_balance(self):
-        return self.total_amount - self.already_paid
+        return float((self.total_amount - self.already_paid) / 100)
     
     @classmethod
     def get_all(cls, session):
@@ -145,11 +157,22 @@ class Contract(BASE):
         return cls(
             client_id=client_id,
             commercial_id=commercial_id,
-            total_amount=total_amount,
-            already_paid=already_paid,
+            total_amount=cls.multiply_by_100(total_amount),
+            already_paid=cls.multiply_by_100(already_paid),
             status=status
         )
 
+    @staticmethod
+    def multiply_by_100(number):
+        return number * 100
+
+    @property
+    def total_amount_100(self):
+        return float(self.total_amount / 100)
+    
+    @property
+    def already_paid_100(self):
+        return float(self.already_paid / 100)
 
 class Event(BASE):
     __tablename__ = 'events'
@@ -209,7 +232,7 @@ class Department(BASE):
         return session.query(cls).all()
     
     @classmethod
-    def get_department_dict(cls, session):
+    def get_departments_dict(cls, session):
         departments_dict = {}
         departments = cls.get_all(session)
         for department in departments:

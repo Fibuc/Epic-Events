@@ -2,7 +2,8 @@ from config import JWT_TOKEN_PATH
 from functools import wraps
 from models.models import Department
 
-from controllers.authentication import verify_token, get_user_department, get_user_id, get_session
+from controllers.authentication import verify_token, get_user_department
+from controllers.session import get_session
 
 
 def is_authenticated(func):
@@ -33,7 +34,7 @@ def is_in_department(required_department):
             session = get_session()
             user_department_id = get_user_department()
             department_user = session.query(Department).filter(Department.id == user_department_id).first()
-            if department_user is None or department_user.name != required_department:
+            if department_user is None or department_user.name not in required_department:
                 raise PermissionError(f"Accès refusé : Vous n'avez pas les droits nécessaires pour effectuer cette opération.")
             
             return func(*args, **kwargs)

@@ -3,35 +3,6 @@ from utils.utils_view import get_success_error_console, get_table, get_console, 
 console = get_success_error_console()
 
 class UserView:
-    
-    @staticmethod
-    def show_all_users(all_users, all_departments):
-        space()
-        table = get_table('Utilisateurs', ['Numéro', 'Nom', 'Email', 'Département'])
-        for i, user in enumerate(all_users):
-            table.add_row(str(i + 1), user.full_name, user.email, all_departments[user.department])
-
-        console.print(table)
-
-    @staticmethod
-    def creation_success_message(user):
-        console.print(f"L'utilistateur {user.full_name} à été créé avec succès.", 'success')
-
-    @staticmethod
-    def delete_success_message(user):
-        console.print(f"L'utilistateur {user.full_name} à été supprimé avec succès.", 'success')
-
-    @staticmethod
-    def modification_success_message():
-        console.print("La modification a été effectuée avec succès.", 'success')
-    
-    @staticmethod
-    def creation_error_message():
-        console.print('Erreur: Création impossible.', 'error')
-
-    @staticmethod
-    def invalid_user_choice(choice):
-        console.print(f"Votre choix '{choice}' n'est pas un choix valide.", style='error')
 
     @staticmethod
     def prompt_user_action():
@@ -73,3 +44,32 @@ class UserView:
     @staticmethod
     def confirm_delete(user):
         return console.input(f"Tapez 'Oui' pour confirmer la suppression de '{user.full_name}' : ").lower()
+
+    @staticmethod
+    def show_all_users(all_users, all_departments):
+        space()
+        table = get_table('Utilisateurs', ['Numéro', 'Nom', 'Email', 'Département'])
+        for i, user in enumerate(all_users):
+            table.add_row(str(i + 1), user.full_name, user.email, all_departments[user.department])
+
+        console.print(table)
+
+    @staticmethod
+    def creation_success_message(user):
+        console.print(f"L'utilistateur {user.full_name} à été créé avec succès.", style='success')
+
+    @staticmethod
+    def delete_success_message(user):
+        console.print(f"L'utilistateur {user.full_name} à été supprimé avec succès.", style='success')
+
+    @staticmethod
+    def modification_success_message():
+        console.print("La modification a été effectuée avec succès.", style='success')
+    
+    @staticmethod
+    def creation_error_message():
+        console.print('Erreur: Création impossible.', style='error')
+
+    @staticmethod
+    def invalid_user_choice(choice):
+        console.print(f"Votre choix '{choice}' n'est pas un choix valide.", style='error')

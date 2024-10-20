@@ -12,15 +12,17 @@ class UserController:
         self.view = UserView
 
     @is_authenticated
-    @is_in_department('Management')
+    @is_in_department(['Management'])
     @with_session
     def get_all(self, session):
         self.all_users = self.model.get_all(session)
-        self.all_departments = models.Department.get_department_dict(session)
+        self.all_departments = models.Department.get_departments_dict(session)
         session.close()
         self.view.show_all_users(self.all_users, self.all_departments)
         self.select_user()
 
+    @is_authenticated
+    @is_in_department(['Management'])
     def select_user(self):
         valid_choice = [str(i) for i in range(1, len(self.all_users) + 1)]
         choice = None
@@ -45,7 +47,7 @@ class UserController:
                 self.view.invalid_user_choice(choice)
 
     @is_authenticated
-    @is_in_department('Management')
+    @is_in_department(['Management'])
     def modify(self):
         choice, number_of_choices = self.view.get_information_to_modify(self.user_selected, self.all_departments)
         possible_choices = [str(i) for i in list(range(1, number_of_choices + 1))]
@@ -84,7 +86,7 @@ class UserController:
             self.view.modification_success_message()
 
     @is_authenticated
-    @is_in_department('Management')
+    @is_in_department(['Management'])
     @with_session
     def delete(self, session=None):
         confirm_choice = self.view.confirm_delete(self.user_selected)
@@ -95,7 +97,7 @@ class UserController:
         
 
     @is_authenticated
-    @is_in_department('Management')
+    @is_in_department(['Management'])
     def create(self, first_name, last_name, email, password, department):
         user = self.model.create(
             first_name=first_name,
