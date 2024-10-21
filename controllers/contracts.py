@@ -1,6 +1,6 @@
-from controllers.session import with_session, get_session, add_and_commit_in_base
-from controllers.permissions import is_authenticated, is_in_department
 from models import models
+from controllers.session import with_session, add_and_commit_in_base
+from controllers.permissions import is_authenticated, is_in_department
 from views.contracts import ContractView
 
 class ContractController:
@@ -9,7 +9,7 @@ class ContractController:
     def __init__(self, session):
         self.model = models.Contract
         self.view = ContractView
-        self.all_commercials = models.User.get_users_dict(session)
+        self.all_commercials = models.Commercial.get_users_dict(session)
         self.all_clients = models.Client.get_clients_dict(session)
 
     @is_authenticated
@@ -19,8 +19,9 @@ class ContractController:
         session.close()
         self.view.show_all_contracts(self.all_contracts, self.all_clients, self.all_commercials)
         self.select_contract()
-    
+
     @with_session
+    @is_in_department(['Commercial', 'Management'])
     def select_contract(self, session):
         valid_choice = [str(i) for i in [c.id for c in self.all_contracts]]
         choice = None
@@ -49,10 +50,8 @@ class ContractController:
                 choice = self.view.get_information_to_modify(self.contract_selected, self.all_clients, self.all_commercials)[0]
                 continue
 
-
         match choice:
             case '1':
-                print(self.contract_selected.outstanding_balance)
                 new_value = self.view.get_new_client(self.all_clients)
                 if new_value:
                     self.contract_selected.client_id = new_value
@@ -66,7 +65,7 @@ class ContractController:
                 if not result:
                     self.view.invalid_user_choice(new_value)
                     return
-                    
+
                 self.contract_selected.total_amount = self.model.multiply_by_100(result)
             case '4':
                 new_value = self.view.get_new_value('Déjà réglé')
@@ -75,7 +74,6 @@ class ContractController:
                     self.view.invalid_user_choice(new_value)
                     return
 
-                
                 self.contract_selected.already_paid = self.model.multiply_by_100(result)
             case '5':
                 new_value = self.view.change_status(self.contract_selected)
@@ -89,7 +87,7 @@ class ContractController:
             case _:
                 self.view.invalid_user_choice(choice)
                 return
-            
+
         if new_value:
             add_and_commit_in_base(self.contract_selected)
             self.view.modification_success_message()
@@ -99,5 +97,23 @@ class ContractController:
         try:
             value = value.replace(',', '.')
             return float(value)
+
         except ValueError:
             return None
+
+    @is_authenticated
+    @is_in_department(['Management'])
+    def create(self, client_id, commercial_id, total_amount, already_paid, status):
+        contract = self.model.create(
+            client_id=client_id,
+            commercial_id=commercial_id,
+            total_amount=total_amount,
+            already_paid=already_paid,
+            status=status
+        )
+        if contract:
+            add_and_commit_in_base(contract)
+            self.view.creation_success_message()
+
+        else:
+            self.view.creation_error_message()

@@ -20,11 +20,11 @@ class User(BASE):
 
     @property
     def full_name(self):
-        return f'{self.first_name} {self. last_name}'
+        return f'{self.last_name} {self.first_name}'
     
     @classmethod
     def get_all(cls, session):
-        return session.query(cls).all()
+        return session.query(cls).order_by(cls.last_name).all()
     
     @classmethod
     def create(cls, first_name, last_name, email, password, department):
@@ -98,7 +98,7 @@ class Client(BASE):
 
     @property
     def full_name(self):
-        return f'{self.first_name} {self. last_name}'
+        return f'{self.last_name} {self.first_name}'
 
     @classmethod
     def get_all(cls, session):
@@ -123,6 +123,7 @@ class Client(BASE):
             clients_dict[client.id] = client.full_name
         
         return clients_dict
+
 
 class Contract(BASE):
     __tablename__ = 'contracts'
@@ -173,6 +174,7 @@ class Contract(BASE):
     @property
     def already_paid_100(self):
         return float(self.already_paid / 100)
+
 
 class Event(BASE):
     __tablename__ = 'events'

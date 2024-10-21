@@ -56,11 +56,11 @@ class UserView:
 
     @staticmethod
     def creation_success_message(user):
-        console.print(f"L'utilistateur {user.full_name} à été créé avec succès.", style='success')
+        console.print(f"L'utilistateur {user.full_name} a été créé avec succès.", style='success')
 
     @staticmethod
     def delete_success_message(user):
-        console.print(f"L'utilistateur {user.full_name} à été supprimé avec succès.", style='success')
+        console.print(f"L'utilistateur {user.full_name} a été supprimé avec succès.", style='success')
 
     @staticmethod
     def modification_success_message():

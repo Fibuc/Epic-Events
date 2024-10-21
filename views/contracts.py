@@ -1,4 +1,4 @@
-from utils.utils_view import get_success_error_console, get_table, get_console, space, convert_date
+from utils.utils_view import get_success_error_console, get_table, space, convert_date
 
 console = get_success_error_console()
 
@@ -29,12 +29,12 @@ class ContractView:
     @staticmethod
     def get_new_client(clients):
         space()
-        table = get_table("Nouveau département", ['Numéro', 'Département'])
+        table = get_table("Nouveau client", ['Numéro', 'Nom'])
         for key, value in clients.items():
             table.add_row(str(key), value)
         
         console.print(table)
-        return console.input('Quel est le numéro du nouveau département? : ')
+        return console.input('Quel est le numéro du nouveau client? : ')
 
     @staticmethod
     def change_status(contract):
@@ -45,12 +45,12 @@ class ContractView:
     @staticmethod
     def get_new_commercial(commercials):
         space()
-        table = get_table("Nouveau département", ['Numéro', 'Département'])
+        table = get_table("Nouveau commercial", ['Numéro', 'Nom'])
         for key, value in commercials.items():
             table.add_row(str(key), value)
         
         console.print(table)
-        return console.input('Quel est le numéro du nouveau département? : ')
+        return console.input('Quel est le numéro du nouveau commercial? : ')
 
     @staticmethod
     def show_all_contracts(all_contracts, all_clients, all_commercials):
@@ -76,7 +76,7 @@ class ContractView:
 
     @staticmethod
     def creation_success_message():
-        console.print(f"Le contrat à été créé avec succès.", style='success')
+        console.print(f"Le contrat a été créé avec succès.", style='success')
 
     @staticmethod
     def modification_success_message():

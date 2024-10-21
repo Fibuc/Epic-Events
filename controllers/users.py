@@ -1,8 +1,6 @@
 from models import models
-
 from controllers.permissions import is_authenticated, is_in_department
 from controllers.session import add_and_commit_in_base, with_session
-
 from views.users import UserView
 
 class UserController:
