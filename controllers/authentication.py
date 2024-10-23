@@ -1,130 +1,138 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import os
-import json
 
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from sqlalchemy.exc import OperationalError
+from dotenv import set_key, unset_key
 
 from models.models import User
+from views.authentication import AuthView
 from controllers.session import with_session
-from config import JWT_TOKEN_PATH, SECRET_JWT_KEY, TOKEN_DURATION
+from config import SECRET_JWT_KEY, TOKEN_DURATION, ENV_FILE
 
-@with_session
-def login(email: str, password: str, session) -> bool:
-    """Permet à l'utilisateur de se connecter à l'application.
+class AuthController:
 
-    Args:
-        email (str): Email de l'utilisateur.
-        password (str): Mot de passe de l'utilisateur.
+    def __init__(self):
+        self.view = AuthView()
 
-    Returns:
-        bool: Etat de la connexion de l'utilisateur. True = Connecté, False = Non connecté.
-    """
-    user = session.query(User).filter_by(email=email).first()
-    if not user or not user.verify_password(password):
-        return False
+    @with_session
+    def login(self, email: str, session):
+        """Permet à l'utilisateur de se connecter à l'application.
 
-    generate_token(user_id=user.id, user_department=user.department)
+        Args:
+            email (str): Email de l'utilisateur.
+        """
+        if not email:
+            email = self.view.get_email()
 
-    return True
-
-
-def logout() -> bool:
-    """Permet à l'utilisateur de se déconnecter de l'application.
-
-    Returns:
-        bool: Etat de la déconnexion.
-    """
-
-    try:
-        os.remove(JWT_TOKEN_PATH)
-        return True
-    
-    except FileNotFoundError:
-        return False
-
-
-def generate_token(user_id: int, user_department: int):
-    """Génère un JSON Web Token de l'utilisateur et l'enregistre dans un fichier json.
-
-    Args:
-        user_id (int): L'id de l'utilisateur.
-        user_department (str): Le département de l'utilisateur.
-
-    """
-    payload = {
-        'user_id': user_id,
-        'user_department': user_department,
-        'exp': datetime.now(timezone.utc).replace(tzinfo=None) + TOKEN_DURATION
-    }
-    token = jwt.encode(payload, SECRET_JWT_KEY, algorithm='HS256')
-    _save_token_json(token)
-
-
-def _save_token_json(token):
-    """Sauvegarde le token dans le fichier indiqué dans config.JWT_TOKEN_PATH.
-
-    Args:
-        token (str): Token d'authentification.
-    """
-    with open(JWT_TOKEN_PATH, 'w') as file:
-        json.dump({'token': token}, file, indent=4)
-
-
-def _load_token_json() -> str | None:
-    """Charge le token dans le fichier token.json.
-    Si le fichier n'existe pas, alors il renvoie None, sinon renvoie le token.
-
-    Returns:
-        str | None: Le token si trouvé, sinon None.
-    """
-    try:
-        with open(JWT_TOKEN_PATH) as file:
-            return json.load(file)['token']
-
-    except FileNotFoundError:
-        return None
-
-
-def verify_token():
-    """Vérifie le JWT de l'utilisateur et retourne le statut de la vérification.
-
-    Returns:
-        bool: Statut de la vérification.
-    """
-    token = _load_token_json()
-    if token:
         try:
-            decoded_token = jwt.decode(token, SECRET_JWT_KEY, algorithms=['HS256'], options={'verify_exp': True})
-            return decoded_token
+            user = session.query(User).filter_by(email=email).first()
         
-        except ExpiredSignatureError:
-            return False
+        except OperationalError:
+            self.view.error_login_no_database()
+            return
 
-        except InvalidTokenError:
-            return False
+        password = self.view.get_password()
+        if not user or not user.verify_password(password):
+            self.view.error_login()
+            return
 
-    else:
-        return False
+        self.generate_token(user_id=user.id, user_department=user.department)
+        self.view.success_login(user.full_name)
 
+    def logout(self):
+        """Permet à l'utilisateur de se déconnecter de l'application."""
+        if 'JWT_TOKEN' in os.environ:
+            unset_key(ENV_FILE, 'JWT_TOKEN')
+            self.view.success_logout()
+        else:
+            self.view.error_no_user_authenticated()
 
-def get_user_id():
-    """Récupère et retourne l'ID de l'utilisateur connecté.
+    def generate_token(self, user_id: int, user_department: int):
+        """Génère un JSON Web Token de l'utilisateur et l'enregistre dans une variable d'environnement.
 
-    Returns:
-        int: L'ID de l'utilisateur connecté
-    """
-    token = verify_token()
-    if token:
-        return token['user_id']
+        Args:
+            user_id (int): L'id de l'utilisateur.
+            user_department (str): Le département de l'utilisateur.
 
+        """
+        payload = {
+            'user_id': user_id,
+            'user_department': user_department,
+            'exp': datetime.now(timezone.utc).replace(tzinfo=None) + TOKEN_DURATION
+        }
+        token = jwt.encode(payload, SECRET_JWT_KEY, algorithm='HS256')
+        self._save_token(token)
 
-def get_user_department():
-    """Récupère et retourne l'ID du département de l'utilisateur connecté.
+    @staticmethod
+    def _save_token(token):
+        """Sauvegarde le token dans le fichier indiqué dans le fichier d'environnement.
 
-    Returns:
-        int: L'ID du département de l'utilisateur connecté.
-    """
-    token = verify_token()
-    if token:
-        return token['user_department']
+        Args:
+            token (str): Token d'authentification.
+        """
+        set_key(ENV_FILE, 'JWT_TOKEN', token)
+
+    @staticmethod
+    def _get_token() -> str | None:
+        """Récupère et retourne le token d'authentification de l'utilisateur.
+
+        Returns:
+            str | None: Le token si trouvé, sinon None.
+        """
+        return os.getenv('JWT_TOKEN')
+
+    def verify_token(self) -> dict | None:
+        """Vérifie le JWT de l'utilisateur et retourne le token si la vérification s'est bien déroulée.
+
+        Returns:
+            dict | None: Un dictionnaire des informations si la vérification s'est bien passée, ou None.
+        """
+        token = self._get_token()
+        if token:
+            try:
+                decoded_token = jwt.decode(token, SECRET_JWT_KEY, algorithms=['HS256'], options={'verify_exp': True})
+                return decoded_token
+            
+            except ExpiredSignatureError:
+                self.view.expired_token()
+                return
+
+            except InvalidTokenError:
+                self.view.error_token()
+                return
+
+        else:
+            return
+
+    def get_user_id(self):
+        """Récupère et retourne l'ID de l'utilisateur connecté.
+
+        Returns:
+            int: L'ID de l'utilisateur connecté
+        """
+        return self.get_user_info('user_id')
+
+    def get_user_department(self):
+        """Récupère et retourne l'ID du département de l'utilisateur connecté.
+
+        Returns:
+            int: L'ID du département de l'utilisateur connecté.
+        """
+        return self.get_user_info('user_department')
+    
+    def get_user_info(self, key: str):
+        """Récupère et retourne l'information de l'utilisateur à partir du token JWT.
+
+        Args:
+            key (str): La clé à récupérer dans le payload du token.
+
+        Returns:
+            int | None: La valeur associée à la clé dans le token, ou None si le token est invalide.
+        """
+        token = self.verify_token()
+        if token:
+            return token.get(key)
+        
+        return None

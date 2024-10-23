@@ -2,12 +2,13 @@ from models import models
 from controllers.session import with_session, add_and_commit_in_base
 from controllers.permissions import is_authenticated, is_in_department
 from views.clients import ClientView
-from controllers.authentication import get_user_id
+from controllers.authentication import AuthController
 
 class ClientController:
 
     @with_session
     def __init__(self, session):
+        self.auth = AuthController()
         self.model = models.Client
         self.view = ClientView
         self.all_commercials = models.Commercial.get_users_dict(session)
@@ -18,7 +19,7 @@ class ClientController:
         self.all_clients = self.model.get_all(session)
         session.close()
         self.view.show_all_clients(self.all_clients, self.all_commercials)
-        user_id = get_user_id()
+        user_id = self.auth.get_user_id()
         self.select_client()
 
     @with_session
@@ -36,7 +37,7 @@ class ClientController:
 
         self.client_selected = self.all_clients[int(choice) - 1]
         session.close()
-        user_id = get_user_id()
+        user_id = self.auth.get_user_id()
         if user_id == self.client_selected.commercial_id:
             self.modify()
 
@@ -53,7 +54,7 @@ class ClientController:
             email=email,
             phone_number=self.format_phone_number(phone_number),
             company_name=company_name,
-            commercial_id=get_user_id()
+            commercial_id=self.auth.get_user_id()
         )
         if client:
             add_and_commit_in_base(client)

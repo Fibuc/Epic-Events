@@ -21,7 +21,8 @@ class UserView:
         table.add_row('1', 'Prénom', user.first_name)
         table.add_row('2', 'Nom', user.last_name)
         table.add_row('3', 'Email', user.email)
-        table.add_row('4', 'Département', all_departments[user.department])
+        table.add_row('4', 'Mot de passe', '**********')
+        table.add_row('5', 'Département', all_departments[user.department])
         console.print(table)
         return console.input('Quel est votre choix? : '), table.row_count
     
@@ -32,14 +33,18 @@ class UserView:
         return console.input(f'{information}: ')
 
     @staticmethod
-    def get_new_department(all_departments):
+    def select_user(option):
+        return console.input(f"Quel est l'ID de l'utilisateur à {option}? : ")
+
+    @staticmethod
+    def get_department(all_departments):
         space()
-        table = get_table("Nouveau département", ['Numéro', 'Département'])
+        table = get_table("Département", ['Numéro', 'Département'])
         for key, value in all_departments.items():
             table.add_row(str(key), value)
         
         console.print(table)
-        return console.input('Quel est le numéro du nouveau département? : ')
+        return console.input('Quel est le numéro du département? : ')
 
     @staticmethod
     def confirm_delete(user):
@@ -48,15 +53,15 @@ class UserView:
     @staticmethod
     def show_all_users(all_users, all_departments):
         space()
-        table = get_table('Utilisateurs', ['Numéro', 'Nom', 'Email', 'Département'])
-        for i, user in enumerate(all_users):
-            table.add_row(str(i + 1), user.full_name, user.email, all_departments[user.department])
+        table = get_table('Utilisateurs', ['ID', 'Nom','Email', 'Département'])
+        for user in all_users:
+            table.add_row(str(user.id), user.full_name, user.email, all_departments[user.department])
 
         console.print(table)
 
     @staticmethod
-    def creation_success_message(user):
-        console.print(f"L'utilistateur {user.full_name} a été créé avec succès.", style='success')
+    def creation_success_message():
+        console.print("L'utilistateur a été créé avec succès.", style='success')
 
     @staticmethod
     def delete_success_message(user):
@@ -71,5 +76,26 @@ class UserView:
         console.print('Erreur: Création impossible.', style='error')
 
     @staticmethod
-    def invalid_user_choice(choice):
-        console.print(f"Votre choix '{choice}' n'est pas un choix valide.", style='error')
+    def invalid_id_choice(choice):
+        console.print(f"Erreur: L'ID '{choice}' n'existe pas.", style='error')
+
+    @staticmethod
+    def invalid_choice(choice):
+        console.print(f"Erreur: Le choix '{choice}' est invalide.", style='error')
+
+    @staticmethod
+    def invalid_email(email):
+        console.print(f"L'adresse email {email} est invalide.", style='error')
+
+    @staticmethod
+    def invalid_department():
+        console.print(f"Le département entré est invalide.", style='error')
+
+    @staticmethod
+    def get_new_user_informations():
+        user_informations = {}
+        user_informations['first_name'] = (console.input('Prénom du nouvel utilisateur: '))
+        user_informations['last_name'] = (console.input('Nom du nouvel utilisateur: '))
+        user_informations['password'] = (console.input('Mot de passe du nouvel utilisateur: '))
+        user_informations['email'] = (console.input('Email du nouvel utilisateur: '))
+        return user_informations

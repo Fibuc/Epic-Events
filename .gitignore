@@ -6,5 +6,4 @@ private/
 pyvenv.cfg
 __pycache__
 .env
-token.json
 .coverage

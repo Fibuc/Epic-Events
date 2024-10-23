@@ -69,8 +69,10 @@ def with_session(func):
     def wrapper(*args, **kwargs):
         session = get_session()
         
-        func(*args, session=session, **kwargs)
+        result = func(*args, session=session, **kwargs)
 
         session.close()
+        
+        return result
 
     return wrapper

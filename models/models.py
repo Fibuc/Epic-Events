@@ -18,25 +18,55 @@ class User(BASE):
     password = Column(String(255), nullable=False)
     department = Column(ForeignKey('departments.id') , nullable=False)
 
+    clients = relationship('Client', back_populates='commercial')
+    contracts = relationship('Contract', back_populates='commercial')
+
+    events = relationship('Event', back_populates='support')
+
     @property
     def full_name(self):
         return f'{self.last_name} {self.first_name}'
     
     @classmethod
-    def get_all(cls, session):
-        return session.query(cls).order_by(cls.last_name).all()
+    def get_all(cls, session, order_by='name'):
+        order = cls.get_order(order_by)
+        return session.query(cls).order_by(order).all()
+    
+    @classmethod
+    def get_filtred_users(cls, session, departments, order_by):
+        departments = session.query(Department).filter(Department.name.in_(departments)).all()
+        departments = [d.id for d in departments]
+        order = cls.get_order(order_by)
+        return session.query(cls).filter(cls.department.in_(departments)).order_by(order).all()      
+
+    @classmethod
+    def get_user(cls, session, user_id):
+        return session.query(cls).filter(cls.id == user_id).first()
+
+    @classmethod
+    def get_order(cls, order_by):
+        order = cls.last_name
+        if order_by == 'id':
+            order = cls.id
+        elif order_by == 'department':
+            order = cls.department
+        
+        return order
     
     @classmethod
     def create(cls, first_name, last_name, email, password, department):
-        hashed_password = ph.hash(password)
         return cls(
             first_name=first_name,
             last_name=last_name,
             email=email,
-            password=hashed_password,
+            password=cls.hash_password(password),
             department=department
             )
     
+    @staticmethod
+    def hash_password(password):
+        return ph.hash(password)
+
     @classmethod
     def get_users_dict(cls, session):
         users_dict = {}
@@ -58,27 +88,6 @@ class User(BASE):
             return False
 
 
-class Commercial(User):
-    
-    clients = relationship('Client', back_populates='commercial')
-    contracts = relationship('Contract', back_populates='commercial')
-
-    @classmethod
-    def get_all(cls, session):
-        commercial_department = session.query(Department).filter(Department.name == 'Commercial').first()
-        return session.query(cls).filter(cls.department==commercial_department.id).all()
-
-
-class Supporter(User):
-    
-    events = relationship('Event', back_populates='support')
-
-    @classmethod
-    def get_all(cls, session):
-        commercial_department = session.query(Department).filter(Department.name == 'Support').first()
-        return session.query(cls).filter(cls.department==commercial_department.id).all()
-
-
 class Client(BASE):
     __tablename__ = 'clients'
 
@@ -92,7 +101,7 @@ class Client(BASE):
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     commercial_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
 
-    commercial = relationship('Commercial', back_populates='clients')
+    commercial = relationship('User', back_populates='clients')
     contracts = relationship('Contract', back_populates='client')
     events = relationship('Event', back_populates='client')
 
@@ -142,7 +151,7 @@ class Contract(BASE):
     updated_at = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
 
     client = relationship('Client', back_populates='contracts')
-    commercial = relationship('Commercial', back_populates='contracts')
+    commercial = relationship('User', back_populates='contracts')
     event = relationship('Event', back_populates='contract')
 
     @property
@@ -175,6 +184,15 @@ class Contract(BASE):
     def already_paid_100(self):
         return float(self.already_paid / 100)
 
+    @classmethod
+    def get_contracts_dict(cls, session):
+        contracts_dict = {}
+        contracts = cls.get_all(session)
+        for contract in contracts:
+            contracts_dict[contract.id] = contract.name
+        
+        return contracts_dict
+
 
 class Event(BASE):
     __tablename__ = 'events'
@@ -191,7 +209,7 @@ class Event(BASE):
 
     contract = relationship('Contract', back_populates='event')
     client = relationship('Client', back_populates='events')
-    support = relationship('Supporter', back_populates='events')
+    support = relationship('User', back_populates='events')
 
     @property
     def duration(self):
