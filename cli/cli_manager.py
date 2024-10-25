@@ -2,9 +2,7 @@ import click
 
 from controllers.authentication import AuthController
 from controllers.database import DatabaseController
-from controllers.session import with_session
 
-from models.models import Department
 
 @click.command()
 @click.option('--email', help="Email de l'utilisateur")

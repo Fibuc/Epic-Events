@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, case, asc
 from sqlalchemy.orm import relationship
 from argon2.exceptions import VerifyMismatchError, InvalidHashError
 
@@ -16,11 +16,11 @@ class User(BASE):
     last_name = Column(String(100), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
-    department = Column(ForeignKey('departments.id') , nullable=False)
+    department_id = Column(ForeignKey('departments.id') , nullable=False)
 
+    department = relationship('Department', back_populates='users')
     clients = relationship('Client', back_populates='commercial')
     contracts = relationship('Contract', back_populates='commercial')
-
     events = relationship('Event', back_populates='support')
 
     @property
@@ -30,18 +30,28 @@ class User(BASE):
     @classmethod
     def get_all(cls, session, order_by='name'):
         order = cls.get_order(order_by)
-        return session.query(cls).order_by(order).all()
+        return session.query(cls).join(User.department).order_by(order).all()
     
     @classmethod
-    def get_filtred_users(cls, session, departments, order_by):
-        departments = session.query(Department).filter(Department.name.in_(departments)).all()
-        departments = [d.id for d in departments]
+    def get_filtred_users(cls, session, departments, order_by='name'):
         order = cls.get_order(order_by)
-        return session.query(cls).filter(cls.department.in_(departments)).order_by(order).all()      
+        return (
+            session.query(cls).join(cls.department)
+            .filter(Department.name.in_(departments))
+            .order_by(order).all()
+        )      
 
     @classmethod
-    def get_user(cls, session, user_id):
-        return session.query(cls).filter(cls.id == user_id).first()
+    def get_user(cls, filter, information, session):
+        return session.query(cls).filter(filter == information).first()
+
+    @classmethod
+    def get_user_by_id(cls, user_id, session):
+        return cls.get_user(cls.id, user_id, session)
+
+    @classmethod
+    def get_user_by_email(cls, user_email, session):
+        return cls.get_user(cls.email, user_email, session)
 
     @classmethod
     def get_order(cls, order_by):
@@ -49,20 +59,20 @@ class User(BASE):
         if order_by == 'id':
             order = cls.id
         elif order_by == 'department':
-            order = cls.department
+            order = Department.name
         
         return order
     
     @classmethod
-    def create(cls, first_name, last_name, email, password, department):
+    def create(cls, first_name, last_name, email, password, department_id):
         return cls(
             first_name=first_name,
             last_name=last_name,
             email=email,
             password=cls.hash_password(password),
-            department=department
+            department_id=department_id
             )
-    
+
     @staticmethod
     def hash_password(password):
         return ph.hash(password)
@@ -110,8 +120,37 @@ class Client(BASE):
         return f'{self.last_name} {self.first_name}'
 
     @classmethod
-    def get_all(cls, session):
-        return session.query(cls).all()
+    def get_all(cls, session, order_by='name'):
+        order = cls.get_order(order_by)
+        return session.query(cls).outerjoin(cls.commercial).order_by(*order).all()
+    
+    @classmethod
+    def get_filtred_clients(cls, session, user_id, order_by):
+        order = cls.get_order(order_by)
+        return session.query(cls).outerjoin(cls.commercial).filter(cls.commercial_id == user_id).order_by(*order).all()
+
+    @classmethod
+    def get_client(cls, filter, information, session):
+        return session.query(cls).filter(filter == information).first()
+
+    @classmethod
+    def get_client_by_id(cls, user_id, session):
+        return cls.get_client(cls.id, user_id, session)
+
+    @classmethod
+    def get_order(cls, order_by):
+        order = [cls.last_name]
+        if order_by == 'id':
+            order = [cls.id]
+        elif order_by == 'company':
+            order = [cls.company_name]
+        elif order_by == 'commercial':
+            order = case(
+            (cls.commercial == None, 1), else_=0
+            )
+            order = [asc(order), cls.commercial]
+
+        return order
 
     @classmethod
     def create(cls, first_name, last_name, email, phone_number, company_name, commercial_id):
@@ -242,6 +281,7 @@ class Department(BASE):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), nullable=False)
 
+    users = relationship('User', back_populates='department')
 
     @classmethod
     def create(cls, name):
@@ -250,12 +290,4 @@ class Department(BASE):
     @classmethod
     def get_all(cls, session):
         return session.query(cls).all()
-    
-    @classmethod
-    def get_departments_dict(cls, session):
-        departments_dict = {}
-        departments = cls.get_all(session)
-        for department in departments:
-            departments_dict[department.id] = department.name
-        
-        return departments_dict
+

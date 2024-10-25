@@ -1,7 +1,7 @@
 import click
-from controllers.permissions import is_in_department
 
 from controllers.users import UserController
+
 
 @click.group()
 def users():

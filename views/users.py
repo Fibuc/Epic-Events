@@ -15,14 +15,14 @@ class UserView:
         return console.input(f"Quel est le numéro de l'utilisateur avec lequel vous voulez interagir? : ")
 
     @staticmethod
-    def get_information_to_modify(user, all_departments):
+    def get_information_to_modify(user):
         space()
         table = get_table("Elément à modifier", ['Numéro', 'Information', 'Valeur'])
         table.add_row('1', 'Prénom', user.first_name)
         table.add_row('2', 'Nom', user.last_name)
         table.add_row('3', 'Email', user.email)
         table.add_row('4', 'Mot de passe', '**********')
-        table.add_row('5', 'Département', all_departments[user.department])
+        table.add_row('5', 'Département', user.department.name)
         console.print(table)
         return console.input('Quel est votre choix? : '), table.row_count
     
@@ -40,22 +40,22 @@ class UserView:
     def get_department(all_departments):
         space()
         table = get_table("Département", ['Numéro', 'Département'])
-        for key, value in all_departments.items():
-            table.add_row(str(key), value)
+        for department in all_departments:
+            table.add_row(str(department.id), department.name)
         
         console.print(table)
-        return console.input('Quel est le numéro du département? : ')
+        return console.input('Quel est le numéro du département? : '), table.row_count
 
     @staticmethod
     def confirm_delete(user):
         return console.input(f"Tapez 'Oui' pour confirmer la suppression de '{user.full_name}' : ").lower()
 
     @staticmethod
-    def show_all_users(all_users, all_departments):
+    def show_all_users(all_users):
         space()
         table = get_table('Utilisateurs', ['ID', 'Nom','Email', 'Département'])
         for user in all_users:
-            table.add_row(str(user.id), user.full_name, user.email, all_departments[user.department])
+            table.add_row(str(user.id), user.full_name, user.email, user.department.name)
 
         console.print(table)
 
@@ -89,7 +89,7 @@ class UserView:
 
     @staticmethod
     def invalid_department():
-        console.print(f"Le département entré est invalide.", style='error')
+        console.print("Le département entré est invalide.", style='error')
 
     @staticmethod
     def get_new_user_informations():

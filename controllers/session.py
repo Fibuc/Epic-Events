@@ -45,14 +45,15 @@ def get_session():
     return Session()
 
 
-def add_and_commit_in_base(element_to_commit):
+def add_and_commit_in_base(element_to_commit, session=None):
     """Créé une session dans laquelle un élément est ajouté à la base de données
     puis se ferme.
 
     Args:
         element_to_commit: Elément à ajouter à la base de données.
     """
-    session = get_session()
+    if not session:
+        session = get_session()
     session.add(element_to_commit)
     session.commit()
     session.close()
@@ -69,10 +70,10 @@ def with_session(func):
     def wrapper(*args, **kwargs):
         session = get_session()
         
-        result = func(*args, session=session, **kwargs)
+        func_result = func(*args, session=session, **kwargs)
 
         session.close()
         
-        return result
+        return func_result
 
     return wrapper

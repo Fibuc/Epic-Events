@@ -1,15 +1,18 @@
 from datetime import datetime, timezone
 import os
+import logging
 
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.exc import OperationalError
-from dotenv import set_key, unset_key
+from dotenv import set_key, unset_key, get_key
 
+from controllers.session import with_session
 from models.models import User
 from views.authentication import AuthView
-from controllers.session import with_session
 from config import SECRET_JWT_KEY, TOKEN_DURATION, ENV_FILE
+
+logging.disable(logging.WARNING)
 
 class AuthController:
 
@@ -27,8 +30,8 @@ class AuthController:
             email = self.view.get_email()
 
         try:
-            user = session.query(User).filter_by(email=email).first()
-        
+            user = User.get_user_by_email(email, session)
+
         except OperationalError:
             self.view.error_login_no_database()
             return
@@ -38,13 +41,12 @@ class AuthController:
             self.view.error_login()
             return
 
-        self.generate_token(user_id=user.id, user_department=user.department)
+        self.generate_token(user_id=user.id, user_department=user.department.name)
         self.view.success_login(user.full_name)
 
     def logout(self):
         """Permet à l'utilisateur de se déconnecter de l'application."""
-        if 'JWT_TOKEN' in os.environ:
-            unset_key(ENV_FILE, 'JWT_TOKEN')
+        if unset_key(ENV_FILE, 'JWT_TOKEN')[0]:
             self.view.success_logout()
         else:
             self.view.error_no_user_authenticated()
@@ -55,7 +57,6 @@ class AuthController:
         Args:
             user_id (int): L'id de l'utilisateur.
             user_department (str): Le département de l'utilisateur.
-
         """
         payload = {
             'user_id': user_id,
@@ -81,7 +82,7 @@ class AuthController:
         Returns:
             str | None: Le token si trouvé, sinon None.
         """
-        return os.getenv('JWT_TOKEN')
+        return get_key(ENV_FILE, 'JWT_TOKEN')
 
     def verify_token(self) -> dict | None:
         """Vérifie le JWT de l'utilisateur et retourne le token si la vérification s'est bien déroulée.
@@ -94,7 +95,7 @@ class AuthController:
             try:
                 decoded_token = jwt.decode(token, SECRET_JWT_KEY, algorithms=['HS256'], options={'verify_exp': True})
                 return decoded_token
-            
+
             except ExpiredSignatureError:
                 self.view.expired_token()
                 return
@@ -112,7 +113,7 @@ class AuthController:
         Returns:
             int: L'ID de l'utilisateur connecté
         """
-        return self.get_user_info('user_id')
+        return self._get_user_info('user_id')
 
     def get_user_department(self):
         """Récupère et retourne l'ID du département de l'utilisateur connecté.
@@ -120,9 +121,9 @@ class AuthController:
         Returns:
             int: L'ID du département de l'utilisateur connecté.
         """
-        return self.get_user_info('user_department')
-    
-    def get_user_info(self, key: str):
+        return self._get_user_info('user_department')
+
+    def _get_user_info(self, key: str):
         """Récupère et retourne l'information de l'utilisateur à partir du token JWT.
 
         Args:
@@ -134,5 +135,5 @@ class AuthController:
         token = self.verify_token()
         if token:
             return token.get(key)
-        
+
         return None

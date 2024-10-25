@@ -74,7 +74,7 @@ def get_user_test():
             'last_name':user[1],
             'email':user[2],
             'password':'12345',
-            'department':user[3]
+            'department_id':user[3]
         }
         all_users.append(User.create(**user_data))
     return all_users

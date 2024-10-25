@@ -23,7 +23,7 @@ class AuthView:
     
     @staticmethod
     def success_logout():
-        console.print(f'Vous avez été déconnecté. A bientôt.')
+        console.print(f'Vous avez été déconnecté. A bientôt.', style='success')
     
     @staticmethod
     def get_email():

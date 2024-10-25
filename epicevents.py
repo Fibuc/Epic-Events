@@ -1,10 +1,10 @@
 import click
 
+from cli.cli_clients import clients
 from cli.cli_users import users
 from cli.cli_manager import login, logout, create_database
 from controllers.authentication import AuthController
-from controllers.session import with_session
-from models.models import Department
+
 
 @click.group()
 @click.help_option(help="Saisir cette option avec n'importe quelle commande du CRM affichera des informations détaillées sur son utilisation.")
@@ -22,13 +22,11 @@ cli.add_command(logout)
 cli.add_command(create_database)
 
 
-@with_session
-def get_summary(session=None):
+def get_summary():
     auth = AuthController()
-    departments = Department.get_departments_dict(session)
     user_department = auth.get_user_department()
-    department = departments[user_department]
-    if department == 'Management':
+    cli.add_command(clients)
+    if user_department == 'Management':
         cli.add_command(users)
 
 
