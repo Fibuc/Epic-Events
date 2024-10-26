@@ -28,7 +28,7 @@ def list_clients(order_by, my_clients=None):
 
 @clients.command('create')
 def create_client():
-    """Crée un nouvel utilisateur."""
+    """Crée un nouveau client."""
     client_controller = ClientController()
     client_controller.create()
 
@@ -42,6 +42,6 @@ def create_client():
 @click.option('--company-name', help="Nouveau nom d'entreprise.")
 @click.option('--commercial-id', help="Nouveau commercial.")
 def modify_user(client_id, first_name, last_name, email, phone_number, company_name, commercial_id):
-    """Modifie un utilisateur."""
+    """Modifie un client."""
     client_controller = ClientController()
     client_controller.modify(client_id, first_name, last_name, email, phone_number, company_name, commercial_id)

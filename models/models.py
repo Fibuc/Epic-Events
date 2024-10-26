@@ -163,15 +163,6 @@ class Client(BASE):
             commercial_id=commercial_id
         )
 
-    @classmethod
-    def get_clients_dict(cls, session):
-        clients_dict = {}
-        clients = cls.get_all(session)
-        for client in clients:
-            clients_dict[client.id] = client.full_name
-        
-        return clients_dict
-
 
 class Contract(BASE):
     __tablename__ = 'contracts'
@@ -193,14 +184,6 @@ class Contract(BASE):
     commercial = relationship('User', back_populates='contracts')
     event = relationship('Event', back_populates='contract')
 
-    @property
-    def outstanding_balance(self):
-        return float((self.total_amount - self.already_paid) / 100)
-    
-    @classmethod
-    def get_all(cls, session):
-        return session.query(cls).all()
-
     @classmethod
     def create(cls, client_id, commercial_id, total_amount, already_paid, status=None):
         return cls(
@@ -216,6 +199,14 @@ class Contract(BASE):
         return number * 100
 
     @property
+    def outstanding_balance(self):
+        return float((self.total_amount - self.already_paid) / 100)
+    
+    @property
+    def sold(self):
+        return self.total_amount == self.already_paid
+
+    @property
     def total_amount_100(self):
         return float(self.total_amount / 100)
     
@@ -224,13 +215,49 @@ class Contract(BASE):
         return float(self.already_paid / 100)
 
     @classmethod
-    def get_contracts_dict(cls, session):
-        contracts_dict = {}
-        contracts = cls.get_all(session)
-        for contract in contracts:
-            contracts_dict[contract.id] = contract.name
+    def get_all(cls, session, order_by='id'):
+        order = cls._get_contracts_order(order_by)
+        return session.query(cls).outerjoin(cls.commercial).outerjoin(cls.client).order_by(*order).all()
+
+    @classmethod
+    def get_filtered_contracts(cls, session, status=None, payment=None, user_id=False, order_by='id'):
+        query = session.query(cls).outerjoin(cls.commercial).outerjoin(cls.client)
         
-        return contracts_dict
+        if status:
+            query = query.filter(cls.status == status)
+
+        if payment is not None:
+            if payment:
+                query = query.filter(cls.already_paid == cls.total_amount)
+            else:
+                query = query.filter(cls.already_paid != cls.total_amount)
+
+        if user_id:
+            query = query.filter(cls.commercial_id == user_id)
+        
+        order = cls._get_contracts_order(order_by)
+        return query.order_by(*order).all()
+    
+    @classmethod
+    def get_contract_by_id(cls, contract_id, session):
+        return session.query(cls).filter(cls.id == contract_id).first()
+    
+    @classmethod
+    def _get_contracts_order(cls, order_by):
+        order = [cls.id]
+        if order_by == 'client':
+            order = [Client.last_name]
+        elif order_by == 'payment':
+            order = [cls.total_amount - cls.already_paid]
+        elif order_by == 'status':
+            order = [cls.status]
+        elif order_by == 'commercial':
+            order = case(
+                (cls.commercial == None, 1),
+                else_=0
+            )
+            order = [asc(order), User.last_name]
+        return order
 
 
 class Event(BASE):

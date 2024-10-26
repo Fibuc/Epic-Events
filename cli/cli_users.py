@@ -38,8 +38,8 @@ def delete_user(user_id):
 
 @users.command('modify')
 @click.option('--user-id', type=int, help="Le numéro de l'utilisateur à modifier.")
-@click.option('--first-name', help="Nouveau prénom.")
-@click.option('--last-name', help="Nouveau nom.")
+@click.option('--first-name', type=str, help="Nouveau prénom.")
+@click.option('--last-name', type=str, help="Nouveau nom.")
 @click.option('--email', help="Nouvel email.")
 @click.option('--password', help="Nouveau mot de passe.")
 @click.option('--department', type=click.Choice(['Management', 'Commercial', 'Support']), help="Nouveau département.")

@@ -223,7 +223,7 @@ class ClientController:
         """Récupère et retourne le client souhaité selon son ID.
 
         Args:
-            user_id (int): ID du client désiré.
+            client_id (int): ID du client désiré.
 
         Returns:
             models.Client | None: Retourne l'instance de Client si trouvé sinon None.

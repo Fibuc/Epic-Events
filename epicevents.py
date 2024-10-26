@@ -1,6 +1,7 @@
 import click
 
 from cli.cli_clients import clients
+from cli.cli_contracts import contracts
 from cli.cli_users import users
 from cli.cli_manager import login, logout, create_database
 from controllers.authentication import AuthController
@@ -26,6 +27,7 @@ def get_summary():
     auth = AuthController()
     user_department = auth.get_user_department()
     cli.add_command(clients)
+    cli.add_command(contracts)
     if user_department == 'Management':
         cli.add_command(users)
 
