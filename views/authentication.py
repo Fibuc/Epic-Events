@@ -31,7 +31,7 @@ class AuthView:
     
     @staticmethod
     def error_login_no_database():
-        console.print('Erreur: Aucune base de données trouvée.', style='error')
+        console.print('Erreur: Aucune base de données trouvée. Utilisez createdatabase pour en créer une.', style='error')
     
     @staticmethod
     def expired_token():

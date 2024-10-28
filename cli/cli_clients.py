@@ -21,7 +21,7 @@ def add_my_clients_option(command):
 @click.option('--order-by', type=click.Choice(['id', 'name', 'company', 'commercial']), help="Trie les clients.")
 @click.help_option('--help', help="Les options peuvent être additionnées.")
 def list_clients(order_by, my_clients=None):
-    """Liste tous les utilisateurs."""
+    """Liste tous les clients."""
     client_controller = ClientController()
     client_controller.get_clients(my_clients, order_by)
 

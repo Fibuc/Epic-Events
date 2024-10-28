@@ -42,7 +42,7 @@ class AuthController:
             return
 
         self.generate_token(user_id=user.id, user_department=user.department.name)
-        self.view.success_login(user.full_name)
+        self.view.success_login(user.first_name)
 
     def logout(self):
         """Permet à l'utilisateur de se déconnecter de l'application."""

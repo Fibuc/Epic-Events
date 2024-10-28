@@ -267,7 +267,7 @@ class Event(BASE):
     contract_id = Column(Integer, ForeignKey('contracts.id'), nullable=False)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
     event_start = Column(DateTime, nullable=False)
-    event_end = Column(DateTime, nullable=False)
+    event_end = Column(DateTime)
     support_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     location = Column(String(255), nullable=False)
     attendees = Column(Integer)
@@ -282,25 +282,72 @@ class Event(BASE):
         return self.event_end - self.event_start
 
     @classmethod
-    def get_all(cls, session):
-        return session.query(cls).all()
+    def get_all(cls, session, order_by='id'):
+        order = cls._get_events_order(order_by)
+        return (
+            session.query(cls).outerjoin(cls.contract)
+            .outerjoin(cls.client).outerjoin(cls.support)
+            .order_by(*order).all()
+        )
 
     @classmethod
     def create(
         cls, contract_id, client_id, event_start, event_end,
-        support_id, location, attendees, notes
+        location, attendees, notes
     ):
         return cls(
             contract_id=contract_id,
             client_id=client_id,
             event_start=event_start,
             event_end=event_end,
-            support_id=support_id,
             location=location,
             attendees=attendees,
             notes=notes
         )
 
+    @classmethod
+    def get_filtered_events(cls, session, date=None, support_id=None, order_by='id'):
+        query = session.query(cls).outerjoin(cls.contract).outerjoin(cls.client).outerjoin(cls.support)
+        
+        if date is not None:
+            if date:
+                query = query.filter(cls.event_end < datetime.now())
+            else:
+                query = query.filter(cls.event_start > datetime.now())
+
+        if support_id is not None:
+            if support_id:
+                query = query.filter(cls.support_id == support_id)
+            else:
+                query = query.filter(cls.support_id == None)
+        
+        order = cls._get_events_order(order_by)
+        return query.order_by(*order).all()
+    
+    @classmethod
+    def get_event_by_id(cls, event_id, session):
+        return session.query(cls).filter(cls.id == event_id).first()
+    
+    @classmethod
+    def _get_events_order(cls, order_by):
+        order = [cls.id]
+        if order_by == 'contract':
+            order = [Contract.id]
+        elif order_by == 'client':
+            order = [Client.last_name]
+        elif order_by == 'support':
+            order = case(
+                (cls.support == None, 1),
+                else_=0
+            )
+            order = [asc(order), User.last_name]
+        elif order_by == 'attendees':
+            order = [cls.attendees]
+        elif order_by == 'start':
+            order = [cls.event_start]
+        elif order_by == 'end':
+            order = [cls.event_end]
+        return order
 
 class Department(BASE):
     __tablename__ = 'departments'
@@ -317,4 +364,3 @@ class Department(BASE):
     @classmethod
     def get_all(cls, session):
         return session.query(cls).all()
-

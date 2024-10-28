@@ -145,9 +145,10 @@ class ContractController:
         if not contract_selected:
             return
         
-        if contract_selected.commercial_id != self.auth.get_user_id():
-            self.view.unauthorized_modification()
-            return
+        if not self.auth.get_user_department() == 'Management':
+            if contract_selected.commercial_id != self.auth.get_user_id():
+                self.view.unauthorized_modification()
+                return
 
         changes = self._apply_changes(contract_selected, client_id, commercial_id, total_amount, already_paid, status)
 

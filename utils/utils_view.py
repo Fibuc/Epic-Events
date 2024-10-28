@@ -2,14 +2,14 @@ from rich.console import Console
 from rich.table import Table
 from rich.theme import Theme
 
-COLORS = ['green', 'cyan', 'blue', 'magenta', 'dark_green', 'bright_blue', 'yellow', 'white', 'black']
+COLORS = ['green', 'cyan', 'blue', 'magenta', 'dark_green', 'bright_blue', 'yellow', 'white', 'white']
 
 def get_console(theme=None):
     return Console(theme=theme)
 
 
 def get_success_error_console():
-    theme = Theme({'success': 'green', 'error': 'bold red'})
+    theme = Theme({'success': 'green', 'error': 'bold red', 'warning': 'bold yellow'})
     return get_console(theme)
 
 
