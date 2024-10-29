@@ -1,28 +1,57 @@
 import click
 
 from controllers.events import EventController
-from controllers.authentication import AuthController 
+from controllers.authentication import AuthController
 
 user = AuthController().get_user_department
 
+
 @click.group()
 def events():
-    """Accède au menu concernant les événements."""
+    """Menu des événements."""
     pass
 
+
 def add_my_events_option(command):
+    """
+    Ajoute l'option '--my-events' si l'utilisateur est un support.
+    Ajoute l'option '--no-support' si l'utilisateur est un gestionnaire.
+    """
     user_authenticated = user()
     if user_authenticated == 'Support':
-        command = click.option('--my-events', is_flag=True, help="Affiche uniquement mes événements.")(command)
+        command = click.option(
+            '--my-events',
+            is_flag=True,
+            help="Affiche uniquement mes événements."
+        )(command)
     elif user_authenticated == 'Management':
-        command = click.option('--no-support', is_flag=True, help="Liste uniquement les événements n'ayant pas de support.")(command)
+        command = click.option(
+            '--no-support',
+            is_flag=True,
+            help="Liste uniquement les événements n'ayant pas de support."
+        )(command)
     return command
+
 
 @events.command('list')
 @add_my_events_option
-@click.option('--date', type=click.Choice(['past', 'upcoming']), help="Liste uniquement les événements correspondant à la période indiquée.")
-@click.option('--order-by', type=click.Choice(['id', 'contract', 'client', 'support', 'attendees', 'start', 'end']), help="Trie les événements.")
-@click.help_option('--help', help="Les options peuvent être additionnées.")
+@click.option(
+    '--date',
+    type=click.Choice(['past', 'upcoming']),
+    help="Liste uniquement les événements correspondant à la période indiquée."
+)
+@click.option(
+    '--order-by',
+    type=click.Choice([
+        'id', 'contract', 'client', 'support',
+        'attendees', 'start', 'end'
+    ]),
+    help="Trie les événements."
+)
+@click.help_option(
+    '--help',
+    help="Les options peuvent être additionnées."
+)
 def list_events(date, order_by, my_events=False, no_support=False):
     """Liste tous les événements"""
     controller = EventController()
@@ -35,20 +64,58 @@ def create_event():
     controller = EventController()
     controller.create()
 
+
 def add_modify_options(command):
+    """
+    Ajoute les options '--notes', '--attendees', '--location', '--event-end',
+    '--event-start' et '--contract-id' si l'utilisateur est un support.
+    """
     user_authenticated = user()
     if user_authenticated == 'Support':
-        command = click.option('--notes', type=str, help="Nouvelles notes pour l'événement.")(command)
-        command = click.option('--attendees', type=int, help="Nouveau nombre de participants.")(command)
-        command = click.option('--location', type=str, help="Nouveau lieu de l'événément.")(command)
-        command = click.option('--event-end', type=str, help="Nouvelle date de fin de l'événement (JJ/MM/AAAA HH:MM).")(command)
-        command = click.option('--event-start', type=str, help="Nouvelle date de début de l'événement (JJ/MM/AAAA HH:MM).")(command)
-        command = click.option('--contract-id', type=int, help="L'ID du nouveau contrat.")(command)
+        command = click.option(
+            '--notes',
+            type=str,
+            help="Nouvelles notes pour l'événement."
+        )(command)
+        command = click.option(
+            '--attendees',
+            type=int,
+            help="Nouveau nombre de participants."
+        )(command)
+        command = click.option(
+            '--location',
+            type=str,
+            help="Nouveau lieu de l'événément."
+        )(command)
+        command = click.option(
+            '--event-end',
+            type=str,
+            help="Nouvelle date de fin de l'événement (JJ/MM/AAAA HH:MM)."
+        )(command)
+        command = click.option(
+            '--event-start',
+            type=str,
+            help="Nouvelle date de début de l'événement (JJ/MM/AAAA HH:MM)."
+        )(command)
+        command = click.option(
+            '--contract-id',
+            type=int,
+            help="L'ID du nouveau contrat."
+        )(command)
     return command
 
+
 @click.command('modify')
-@click.option('--event-id', type=int, help="L'ID de l'événement à associer à un support.")
-@click.option('--support-id', type=int, help="L'ID du nouveau support.")
+@click.option(
+    '--event-id',
+    type=int,
+    help="L'ID de l'événement à associer à un support."
+)
+@click.option(
+    '--support-id',
+    type=int,
+    help="L'ID du nouveau support."
+)
 @add_modify_options
 def modify_event(
     event_id, support_id=None, contract_id=None, event_start=None,

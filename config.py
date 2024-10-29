@@ -24,4 +24,4 @@ URL_DATABASE = URL_MYSQL + DATABASE
 BASE = declarative_base()
 
 # Variables du JWT d'authentification.
-TOKEN_DURATION = timedelta(days=0,hours=1,minutes=0)
+TOKEN_DURATION = timedelta(days=0, hours=1, minutes=0)

@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import os
 import logging
 
 import jwt
@@ -13,6 +12,7 @@ from views.authentication import AuthView
 from config import SECRET_JWT_KEY, TOKEN_DURATION, ENV_FILE
 
 logging.disable(logging.WARNING)
+
 
 class AuthController:
 
@@ -41,7 +41,10 @@ class AuthController:
             self.view.error_login()
             return
 
-        self.generate_token(user_id=user.id, user_department=user.department.name)
+        self.generate_token(
+            user_id=user.id, user_department=user.department.name,
+            user_name=user.full_name
+        )
         self.view.success_login(user.first_name)
 
     def logout(self):
@@ -51,8 +54,11 @@ class AuthController:
         else:
             self.view.error_no_user_authenticated()
 
-    def generate_token(self, user_id: int, user_department: int):
-        """Génère un JSON Web Token de l'utilisateur et l'enregistre dans une variable d'environnement.
+    def generate_token(
+        self, user_id: int, user_department: int, user_name: str
+    ):
+        """Génère un JSON Web Token de l'utilisateur et l'enregistre dans une
+        variable d'environnement.
 
         Args:
             user_id (int): L'id de l'utilisateur.
@@ -61,14 +67,19 @@ class AuthController:
         payload = {
             'user_id': user_id,
             'user_department': user_department,
-            'exp': datetime.now(timezone.utc).replace(tzinfo=None) + TOKEN_DURATION
+            'user_name': user_name,
+            'exp': (
+                datetime.now(timezone.utc).replace(tzinfo=None)
+                + TOKEN_DURATION
+            )
         }
         token = jwt.encode(payload, SECRET_JWT_KEY, algorithm='HS256')
         self._save_token(token)
 
     @staticmethod
     def _save_token(token):
-        """Sauvegarde le token dans le fichier indiqué dans le fichier d'environnement.
+        """Sauvegarde le token dans le fichier indiqué dans le fichier
+        d'environnement.
 
         Args:
             token (str): Token d'authentification.
@@ -84,30 +95,32 @@ class AuthController:
         """
         return get_key(ENV_FILE, 'JWT_TOKEN')
 
-    def verify_token(self) -> dict | None:
-        """Vérifie le JWT de l'utilisateur et retourne le token si la vérification s'est bien déroulée.
+    def verify_token(self) -> dict[str, str] | None:
+        """Vérifie le JWT de l'utilisateur et retourne le token si la
+        vérification s'est bien déroulée.
 
         Returns:
-            dict | None: Un dictionnaire des informations si la vérification s'est bien passée, ou None.
+            dict | None: Un dictionnaire des informations si la vérification
+                s'est bien passée, ou None.
         """
-        token = self._get_token()
-        if token:
-            try:
-                decoded_token = jwt.decode(token, SECRET_JWT_KEY, algorithms=['HS256'], options={'verify_exp': True})
-                return decoded_token
-
-            except ExpiredSignatureError:
-                self.view.expired_token()
-                return
-
-            except InvalidTokenError:
-                self.view.error_token()
-                return
-
-        else:
+        if not (token := self._get_token()):
+            return
+        try:
+            return jwt.decode(
+                token,
+                SECRET_JWT_KEY,
+                algorithms=['HS256'],
+                options={'verify_exp': True},
+            )
+        except ExpiredSignatureError:
+            self.view.expired_token()
             return
 
-    def get_user_id(self):
+        except InvalidTokenError:
+            self.view.error_token()
+            return
+
+    def get_user_id(self) -> int:
         """Récupère et retourne l'ID de l'utilisateur connecté.
 
         Returns:
@@ -115,25 +128,32 @@ class AuthController:
         """
         return self._get_user_info('user_id')
 
-    def get_user_department(self):
-        """Récupère et retourne l'ID du département de l'utilisateur connecté.
+    def get_user_department(self) -> str:
+        """Récupère et retourne le nom du département de l'utilisateur
+        connecté.
 
         Returns:
-            int: L'ID du département de l'utilisateur connecté.
+            str: Le nom du département de l'utilisateur connecté.
         """
         return self._get_user_info('user_department')
 
+    def get_user_name(self) -> str | None:
+        """Récupère et retourne le nom de l'utilisateur connecté.
+
+        Returns:
+            str: Le nom de l'utilisateur connecté.
+        """
+        return self._get_user_info('user_name')
+
     def _get_user_info(self, key: str):
-        """Récupère et retourne l'information de l'utilisateur à partir du token JWT.
+        """Récupère et retourne l'information de l'utilisateur à partir
+        du token JWT.
 
         Args:
             key (str): La clé à récupérer dans le payload du token.
 
         Returns:
-            int | None: La valeur associée à la clé dans le token, ou None si le token est invalide.
+            int | None: La valeur associée à la clé dans le token, ou None
+                si le token est invalide.
         """
-        token = self.verify_token()
-        if token:
-            return token.get(key)
-
-        return None
+        return token.get(key) if (token := self.verify_token()) else None
