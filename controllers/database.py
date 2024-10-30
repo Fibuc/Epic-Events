@@ -69,7 +69,7 @@ class DatabaseController:
         set_key(ENV_FILE, 'SECRET_JWT_KEY', config.SECRET_JWT_KEY)
         self.view.success_creation_env()
 
-    def init_database(self, datas):
+    def init_database(self, database: str = DATABASE, datas: bool = False):
         """Permet de créer la base de données ainsi que toutes les tables.
         Si aucun nom de base de données est entré en paramètre, cela créera
         la base de données avec pour nom le nom entré dans config.DATABASE.
@@ -81,13 +81,13 @@ class DatabaseController:
         if not ENV_FILE.exists():
             self._create_env_file()
 
-        result = self._create_database(DATABASE)
+        result = self._create_database(database)
         if not result:
-            self.view.error_creation_database(DATABASE)
+            self.view.error_creation_database(database)
             return
 
-        self.view.success_creation_database(DATABASE)
-        self._create_tables(DATABASE)
+        self.view.success_creation_database(database)
+        self._create_tables(database)
         self.view.success_creation_tables()
         if datas:
             generate_datas()

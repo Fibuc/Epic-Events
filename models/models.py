@@ -38,7 +38,7 @@ class User(BASE):
 
     @classmethod
     def get_filtred_users(
-        cls, session, departments, order_by='name'
+        cls, session, departments: list[str], order_by='name'
     ) -> list['User']:
         order = cls.get_order(order_by)
         return (
@@ -131,11 +131,13 @@ class Client(BASE):
         )
 
     @classmethod
-    def get_filtred_clients(cls, session, user_id, order_by) -> list['Client']:
+    def get_filtred_clients(
+        cls, session, commercial_id, order_by='name'
+    )-> list['Client']:
         order = cls.get_order(order_by)
         return (
             session.query(cls).outerjoin(cls.commercial)
-            .filter(cls.commercial_id == user_id).order_by(*order).all()
+            .filter(cls.commercial_id == commercial_id).order_by(*order).all()
         )
 
     @classmethod

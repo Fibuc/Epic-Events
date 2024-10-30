@@ -64,8 +64,8 @@ def is_in_department(required_department: list['str']):
                     or user_department not in required_department
                 ):
                     raise PermissionError(
-                        "Accès refusé : Vous n'avez pas les droits nécessaires "
-                        "pour effectuer cette opération."
+                        "Accès refusé : Vous n'avez pas les droits nécessaires"
+                        " pour effectuer cette opération."
                     )
             except PermissionError as e:
                 sentry_sdk.capture_exception(e)

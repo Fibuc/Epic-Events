@@ -7,3 +7,4 @@ pyvenv.cfg
 __pycache__
 .env
 .coverage
+flake8_rapport/
