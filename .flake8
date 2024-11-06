@@ -6,4 +6,3 @@ exclude =
     Lib/,
     Scripts/
     private/
-    tests/

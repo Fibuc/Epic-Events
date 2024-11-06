@@ -1,27 +1,48 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from unittest.mock import patch, MagicMock
 
 import pytest
-from sqlalchemy.exc import ProgrammingError
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from controllers.database import DatabaseController
 from models import models
-from config import BASE
+from config import BASE, URL_MYSQL
 
-
-database_for_test = 'epic_events_test_session'
+DATABASE_TEST_NAME = 'epic_events_test_session'
+URL_DATABASE_TEST = URL_MYSQL + DATABASE_TEST_NAME
+CREATION = False
 
 
 @pytest.fixture(scope='session')
 def database_session():
-    engine = create_engine('sqlite:///:memory:', echo=False)
-    BASE.metadata.create_all(engine)
+    controller = DatabaseController()
+    engine = create_engine(URL_DATABASE_TEST)
     Session = sessionmaker(engine)
     session = Session()
+    controller.init_database(database=DATABASE_TEST_NAME)
 
     yield session
 
     session.close()
+    with engine.connect() as connection:
+        connection.execute(text(f'DROP DATABASE {DATABASE_TEST_NAME}'))
+
+
+@pytest.fixture(scope='session', autouse=True)
+def mock_get_session(database_session):
+    with patch(
+        'controllers.session.get_session', return_value=database_session
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture(scope='session', autouse=True)
+def mock_with_session(database_session):
+    with patch(
+        'controllers.session.with_session', return_value=database_session
+    ) as mock:
+        yield mock
 
 
 @pytest.fixture
@@ -31,19 +52,13 @@ def user_informations():
         'last_name': 'Dupond',
         'email': 'email_user@test.com',
         'password': '123',
-        'department': 1
+        'department_id': 1
     }
 
 
 @pytest.fixture
-def user_instance(user_informations):
-    return models.User.create(
-            first_name=user_informations['first_name'],
-            last_name=user_informations['last_name'],
-            email=user_informations['email'],
-            password=user_informations['password'],
-            department=user_informations['department'],
-        )
+def user_instance(user_informations) -> models.User:
+    return models.User.create(**user_informations)
 
 
 @pytest.fixture
@@ -59,15 +74,8 @@ def client_informations():
 
 
 @pytest.fixture
-def client_instance(client_informations):
-    return models.Client.create(
-            first_name=client_informations['first_name'],
-            last_name=client_informations['last_name'],
-            email=client_informations['email'],
-            phone_number=client_informations['phone_number'],
-            company_name=client_informations['company_name'],
-            commercial_id=client_informations['commercial_id'],
-        )
+def client_instance(client_informations) -> models.Client:
+    return models.Client.create(**client_informations)
 
 
 @pytest.fixture
@@ -82,14 +90,8 @@ def contract_informations():
 
 
 @pytest.fixture
-def contract_instance(contract_informations):
-    return models.Contract.create(
-            client_id=contract_informations['client_id'],
-            commercial_id=contract_informations['commercial_id'],
-            total_amount=contract_informations['total_amount'],
-            already_paid=contract_informations['already_paid'],
-            status=contract_informations['status'],
-        )
+def contract_instance(contract_informations) -> models.Contract:
+    return models.Contract.create(**contract_informations)
 
 
 @pytest.fixture
@@ -99,7 +101,6 @@ def event_informations():
         'client_id': 1,
         'event_start': datetime.today(),
         'event_end': datetime.today() + timedelta(days=1),
-        'support_id': 2,
         'location': 'Angers',
         'attendees': 34,
         'notes': 'Notes pour le test',
@@ -107,14 +108,15 @@ def event_informations():
 
 
 @pytest.fixture
-def event_instance(event_informations):
-    return models.Event.create(
-            contract_id=event_informations['contract_id'],
-            client_id=event_informations['client_id'],
-            event_start=event_informations['event_start'],
-            event_end=event_informations['event_end'],
-            support_id=event_informations['support_id'],
-            location=event_informations['location'],
-            attendees=event_informations['attendees'],
-            notes=event_informations['notes']
-        )
+def event_instance(event_informations) -> models.Event:
+    return models.Event.create(**event_informations)
+
+
+@pytest.fixture
+def department_informations():
+    return {'name': 'Management'}
+
+
+@pytest.fixture
+def department_instance(department_informations) -> models.Department:
+    return models.Department.create(**department_informations)

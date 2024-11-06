@@ -20,7 +20,7 @@ class AuthController:
         self.view = AuthView()
 
     @with_session
-    def login(self, email: str, session):
+    def login(self, email: str, session=None):
         """Permet à l'utilisateur de se connecter à l'application.
 
         Args:

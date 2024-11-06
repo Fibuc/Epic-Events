@@ -140,7 +140,7 @@ class ContractController:
         total_amount, already_paid = self._format_in_float(
             [total_amount, already_paid]
         )
-        if not total_amount or not already_paid:
+        if not total_amount or already_paid is None:
             return
 
         contract_informations['total_amount'] = total_amount
@@ -228,7 +228,7 @@ class ContractController:
             contract_selected, client_id, commercial_id,
             total_amount, already_paid, status
         )
-
+        value = None
         # Sinon demande à l'utilisateur les modifications souhaitées.
         if not changes:
             choice = self.view.get_information_to_modify(contract_selected)
@@ -250,7 +250,9 @@ class ContractController:
             )
 
         if changes:
-            self._get_sentry_message(contract_selected, value)
+            if status == 'signed' or value == 'signed':
+                self._get_sentry_message(contract_selected)
+
             add_and_commit_in_base(contract_selected, session)
             self.view.modification_success_message()
 
@@ -258,7 +260,7 @@ class ContractController:
             self, contract_selected: models.Contract, client_id=None,
             commercial_id=None, total_amount=None, already_paid=None,
             status=None
-    ) -> bool:
+    ) -> bool | str:
         """Applique les changements dans l'instance du contrat entré en
         paramètre et retourne un booleen indiquant si oui ou non il y a eu
         des changements.
@@ -275,7 +277,8 @@ class ContractController:
             status (str, optional): Statut du contrat. Défaut: None.
 
         Returns:
-            bool: Etat du changement du contrat.
+            bool | tuple: Etat du changement du contrat. Et d'une chaîne de
+            caractères s'il s'agit de la signature d'un contrat.
         """
         changes = False
         if client_id:
@@ -301,7 +304,7 @@ class ContractController:
         if status:
             if status == 'signed':
                 contract_selected.status = self.model.ContractStatus.signed
-                changes = True
+                changes = 'signed'
             elif status == 'unsigned':
                 contract_selected.status = self.model.ContractStatus.unsigned
                 changes = True
@@ -366,19 +369,13 @@ class ContractController:
             return self.model.get_contract_by_id(user_choice, session)
         return None
 
-    def _get_sentry_message(
-        self, contract: models.Contract, value: str
-    ):
-        """Vérifie et crée un message Sentry si le contrat passe du statut
+    def _get_sentry_message(self, contract: models.Contract):
+        """Crée un message Sentry lorsque le contrat passe du statut
         'Non signé' à 'Signé'.
 
         Args:
-            contract (models.Contract): Contrat à vérifier.
-            value (str): Valeur en cours de modification.
+            contract (models.Contract): Contrat signé.
         """
-        if value != 'signed':
-            return
-
         message = (
             f"Contrat n°{contract.id} | {contract.client.full_name} a"
             f" signé son contrat."

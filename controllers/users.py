@@ -138,9 +138,17 @@ class UserController:
         if not user_selected:
             return
 
+        departments = self.model_department.get_all(session)
+        department_id = None
+        if department_name:
+            department_id = next(
+                d.id
+                for d in departments
+                if d.name == department_name
+            )
         changes = self._apply_changes(
             user_selected, first_name, last_name,
-            email, password, department_name
+            email, password, department_id
         )
 
         if not changes:
@@ -156,7 +164,6 @@ class UserController:
                 return
 
             if choice == possible_choices[-1]:
-                departments = self.model_department.get_all(session)
                 value, nb_choices = self.view.get_department(departments)
                 possible_choices = self._get_possible_choices(nb_choices)
                 if value not in possible_choices:
@@ -318,7 +325,6 @@ class UserController:
                 for department in departments
                 if department.id == user_informations['department_id']
             )
-            print(department)
             self._get_sentry_message(
                 user=user, department=department, creation=True
             )
@@ -380,7 +386,6 @@ class UserController:
         auth_user_name = self.auth.get_user_name()
         if creation:
             action = 'Création'
-            action_verb = 'créé'
             action_verb = 'créé'
         else:
             action = 'Suppression'

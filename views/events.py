@@ -189,8 +189,8 @@ class EventView:
     @staticmethod
     def contract_not_exists(contract_id):
         console.print(
-            f"Erreur: Le contrat ayant pour ID {contract_id} n'existe pas.",
-            style='error'
+            f"Erreur: Le contrat ayant pour ID {contract_id} "
+            f"n'existe pas ou n'est pas signé.", style='error'
         )
 
     @staticmethod

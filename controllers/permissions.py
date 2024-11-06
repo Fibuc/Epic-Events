@@ -57,20 +57,24 @@ def is_in_department(required_department: list['str']):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            user_department = AuthController().get_user_department()
+            controller = AuthController()
+            user_department = controller.get_user_department()
             try:
                 if (
                     user_department is None
                     or user_department not in required_department
                 ):
+                    user_name = controller.get_user_name()
                     raise PermissionError(
-                        "Accès refusé : Vous n'avez pas les droits nécessaires"
-                        " pour effectuer cette opération."
+                        f"Accès refusé à {user_name}: Vous n'avez pas les"
+                        f" droits nécessaires pour effectuer cette opération."
                     )
-            except PermissionError as e:
-                sentry_sdk.capture_exception(e)
 
-            return func(*args, **kwargs)
+                return func(*args, **kwargs)
+
+            except PermissionError as e:
+                print(e)
+                sentry_sdk.capture_exception(e)
 
         return wrapper
 

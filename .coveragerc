@@ -1,0 +1,2 @@
+[run]
+omit = tests/*, views/*, utils/*, epicevents.py, */__init__.py

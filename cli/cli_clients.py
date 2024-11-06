@@ -4,6 +4,9 @@ from controllers.clients import ClientController
 from controllers.authentication import AuthController
 
 
+user = AuthController()
+
+
 @click.group()
 def clients():
     """Menu des clients."""
@@ -12,7 +15,7 @@ def clients():
 
 def add_my_clients_option(command):
     """Ajoute l'option '--my-clients' si l'utilisateur est un commercial."""
-    if AuthController().get_user_department() == 'Commercial':
+    if user.get_user_department() == 'Commercial':
         command = click.option(
             '--my-clients',
             is_flag=True,
@@ -38,14 +41,14 @@ def list_clients(order_by: str, my_clients: bool = False):
     controller.get_clients(my_clients, order_by)
 
 
-@clients.command('create')
+@click.command('create')
 def create_client():
     """Crée un nouveau client."""
     controller = ClientController()
     controller.create()
 
 
-@clients.command('modify')
+@click.command('modify')
 @click.option(
     '--client-id',
     type=int,
@@ -91,3 +94,9 @@ def modify_client(
         client_id, first_name, last_name, email,
         phone_number, company_name, commercial_id
     )
+
+
+user_department = user.get_user_department()
+if user_department == 'Commercial':
+    clients.add_command(create_client)
+    clients.add_command(modify_client)

@@ -202,7 +202,7 @@ class EventController:
         # Applique les changements si des éléments sont entrés en paramètres.
         changes = self._apply_changes(
             event_selected, support_id, contract_id, event_start,
-            event_end, location, attendees, notes
+            event_end, location, attendees, notes, session=session
         )
 
         # Sinon demande à l'utilisateur les modifications souhaitées.
@@ -210,14 +210,6 @@ class EventController:
             changes, support_id = self._get_modifications(
                 user_department, event_selected, session
             )
-
-        if support_id and changes:
-            confirm = self.view.confirm_support_choice(
-                event_selected.support.full_name
-            )
-            if not confirm or confirm.lower() != 'oui':
-                self.view.cancel_modifications()
-                changes = False
 
         if changes:
             add_and_commit_in_base(event_selected, session)
@@ -246,7 +238,7 @@ class EventController:
 
             return (
                 self._apply_changes(
-                    event_selected, support_id=int(support_id)
+                    event_selected, support_id=int(support_id), session=session
                 ), support_id
             )
 
@@ -303,9 +295,15 @@ class EventController:
         """
         changes = False
         if support_id:
+            if isinstance(support_id, str) and support_id.isdigit():
+                support_id = int(support_id)
             if self.check_user_is_support(support_id):
-                event_selected.support_id = support_id
-                changes = True
+                support_name = self.model_user.get_user_by_id(
+                    support_id, session
+                ).full_name
+                if self.get_confirmation(support_name):
+                    event_selected.support_id = support_id
+                    changes = True
             else:
                 self.view.not_support(support_id)
                 return False
@@ -438,6 +436,16 @@ class EventController:
             return
 
         return int(choice)
+
+    def get_confirmation(self, support_name):
+        confirm = self.view.confirm_support_choice(
+            support_name
+        )
+        if not confirm or confirm.lower() != 'oui':
+            self.view.cancel_modifications()
+            return False
+
+        return True
 
     @with_session
     def check_user_is_support(self, support_id: int, session=None) -> bool:

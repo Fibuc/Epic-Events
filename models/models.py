@@ -133,7 +133,7 @@ class Client(BASE):
     @classmethod
     def get_filtred_clients(
         cls, session, commercial_id, order_by='name'
-    )-> list['Client']:
+    ) -> list['Client']:
         order = cls.get_order(order_by)
         return (
             session.query(cls).outerjoin(cls.commercial)
@@ -159,7 +159,7 @@ class Client(BASE):
             order = case(
                 (cls.commercial is None, 1), else_=0
             )
-            order = [asc(order), cls.commercial]
+            order = [asc(order), User.last_name]
 
         return order
 
@@ -353,7 +353,7 @@ class Event(BASE):
             if support_id:
                 query = query.filter(cls.support_id == support_id)
             else:
-                query = query.filter(cls.support_id is None)
+                query = query.filter(cls.support_id == None)  # noqa: E711
 
         order = cls._get_events_order(order_by)
         return query.order_by(*order).all()

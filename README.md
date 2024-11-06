@@ -55,6 +55,10 @@ Lorsque vous aurez activé votre environnement virtuel, vous aurez également be
 pip install -r requirements.txt
 ```
 
+### Installation de MySQL.
+
+Dans ce projet, nous utilisons MySQL concernant la base de données. Si vous ne l'avez pas, vous pouvez suivre ce [tutoriel OpenClassrooms](https://openclassrooms.com/fr/courses/6971126-implementez-vos-bases-de-donnees-relationnelles-avec-sql/7152681-installez-le-sgbd-mysql) pour l'installation de celui-ci.
+
 ## Utilisation du CRM
 
 ### La base de données
@@ -109,3 +113,24 @@ flake8 --format=html --htmldir=flake8_rapport
 ```
 
 Ce nouveau rapport sera généré dans le dossier "flake8_rapport".
+
+## Afficher la couverture de test
+
+L'application est couverte par des tests unitaires. Pour effectuer les tests, vous pouvez utiliser la commande suivante:
+
+```bash
+pytest tests/
+```
+
+Si vous souhaitez afficher la couverture de test, vous pouvez utiliser la commande suivante:
+
+```bash
+pytest --cov=. tests/
+```
+
+Pour générer un rapport HTML de cette couverture, utilisez la commande suivante:
+
+```bash
+pytest --cov=. --cov-report=html tests/
+```
+
