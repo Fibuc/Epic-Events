@@ -1,9 +1,10 @@
+import importlib
 from functools import wraps
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
-from config import URL_MYSQL, DATABASE
+import config
 
 
 def get_engine(database: str = ''):
@@ -16,7 +17,9 @@ def get_engine(database: str = ''):
     Returns:
         Engine: Moteur liant l'ORM avec la base de données.
     """
-    url = URL_MYSQL
+    importlib.reload(config)
+    url = config.URL_MYSQL
+
     if database:
         url += database
 
@@ -30,10 +33,7 @@ def get_database_engine():
     Returns:
         Engine: Moteur de la base de données.
     """
-    return get_engine(DATABASE)
-
-
-engine = get_database_engine()
+    return get_engine(config.DATABASE)
 
 
 def get_session():
@@ -43,6 +43,7 @@ def get_session():
     Returns:
         Session: Session d'interaction.
     """
+    engine = get_database_engine()
     Session = sessionmaker(engine)
     return Session()
 

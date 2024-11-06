@@ -115,6 +115,7 @@ class ClientController:
             return
 
         client_informations['commercial_id'] = self.auth.get_user_id()
+        client_informations['phone_number'] = phone_number
         if client := self.model.create(**client_informations):
             add_and_commit_in_base(client)
             self.view.creation_success_message()

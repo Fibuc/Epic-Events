@@ -73,6 +73,21 @@ python epicevents.py createdatabase --datas
 
 Cette commande vous permet de créer une base de données avec des valeurs initiales qui seront créées à titre d'exemple. Si vous désirez une base avec des tables vierges, alors supprimez simplement l'option *`--datas`*.
 
+### Les différents utilisateurs pour tester les fonctions
+
+| Nom               | Email                             | Mot de passe | Départment  |
+| :-----------------|:----------------------------------|:------------:|:------------|
+| Bouchet Patricia  | patricia.bouchet@epic-events.com  | 12345        | Support     |
+| Boutin Jeanne     | jeanne.boutin@epic-events.com     | 12345        | Commercial  |
+| Briand Gabriel    | gabriel.briand@epic-events.com    | 12345        | Support     |
+| Chevallier Eugène | eugene.chevallier@epic-events.com | 12345        | Management  |
+| Colin Zoé         | zoe.colin@epic-events.com         | 12345        | Support     |
+| Lamy Henriette    | henriette.lamy@epic-events.com    | 12345        | Management  |
+| Marchal Benoît    | benoit.marchal@epic-events.com    | 12345        | Commercial  |
+| Navarro Mathilde  | mathilde.navarro@epic-events.com  | 12345        | Support     |
+| Peron Suzanne     | suzanne.peron@epic-events.com     | 12345        | Commercial  |
+| Reynaud Rémy      | remy.reynaud@epic-events.com      | 12345        | Commercial  |
+
 ### Les différentes commandes disponibles
 
 ***⚠️ Important : Toutes les options des commandes ne sont pas énumérées ici. Si vous souhaitez vérifier toutes les options disponibles concernant une commande, vous pouvez vous y référer en précisant l'option `--help` à la fin de celle-ci.***
